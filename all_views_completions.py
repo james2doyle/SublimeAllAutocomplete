@@ -14,6 +14,11 @@ MAX_VIEWS = 20
 MAX_WORDS_PER_VIEW = 100
 MAX_FIX_TIME_SECS_PER_VIEW = 0.01
 
+def php_dollar_fix(s):
+    if s.startswith('$'):
+        s = '\\$' + s[1:]
+    return s
+
 class AllAutocomplete(sublime_plugin.EventListener):
 
     def on_query_completions(self, view, prefix, locations):
@@ -35,7 +40,7 @@ class AllAutocomplete(sublime_plugin.EventListener):
             words += view_words
 
         words = without_duplicates(words)
-        matches = [(w, w.replace('$', '\\$')) for w in words]
+        matches = [(w, php_dollar_fix(w)) for w in words]
         return matches
 
 def filter_words(words):
