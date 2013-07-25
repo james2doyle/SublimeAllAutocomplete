@@ -4,6 +4,7 @@
 import sublime_plugin
 import sublime
 import re
+import dis
 import time
 
 # limits to prevent bogging down the system
@@ -17,6 +18,7 @@ MAX_FIX_TIME_SECS_PER_VIEW = 0.01
 def php_dollar_fix(s):
     if s.startswith('$'):
         s = '\\$' + s[1:]
+        #s = s[1:]
     return s
 
 class AllAutocomplete(sublime_plugin.EventListener):
@@ -24,6 +26,14 @@ class AllAutocomplete(sublime_plugin.EventListener):
     def on_query_completions(self, view, prefix, locations):
         words = []
 
+        
+        php_var_corrector = lambda x: x
+
+        if prefix.startswith('$'):
+            php_var_corrector = lambda x: '$'+x
+            prefix = prefix[1:]
+            #prefix = php_dollar_fix(prefix)
+            
         # Limit number of views but always include the active view. This
         # view goes first to prioritize matches close to cursor position.
         other_views = [v for v in sublime.active_window().views() if v.id != view.id]
@@ -35,12 +45,13 @@ class AllAutocomplete(sublime_plugin.EventListener):
                 view_words = v.extract_completions(prefix, locations[0])
             else:
                 view_words = v.extract_completions(prefix)
+
             view_words = filter_words(view_words)
             view_words = fix_truncation(v, view_words)
             words += view_words
 
         words = without_duplicates(words)
-        matches = [(w, php_dollar_fix(w)) for w in words]
+        matches = [(php_var_corrector(w), php_var_corrector(w)) for w in words]
         return matches
 
 def filter_words(words):
