@@ -27,10 +27,12 @@ class AllAutocomplete(sublime_plugin.EventListener):
         words = []
 
         
-        php_var_corrector = lambda x: x
+        pvc1 = lambda x: x
+        pvc2 = lambda x: x
 
         if prefix.startswith('$'):
-            php_var_corrector = lambda x: '$'+x
+            pvc1 = lambda x: '$'+x
+            pvc2 = lambda x: '\\$'+x
             prefix = prefix[1:]
             #prefix = php_dollar_fix(prefix)
             
@@ -51,8 +53,9 @@ class AllAutocomplete(sublime_plugin.EventListener):
             words += view_words
 
         words = without_duplicates(words)
-        matches = [(php_var_corrector(w), php_var_corrector(w)) for w in words]
-        return matches
+        matches = [(pvc1(w), pvc2(w)) for w in words]
+        print(matches)
+        return (matches, sublime.INHIBIT_WORD_COMPLETIONS | sublime.INHIBIT_EXPLICIT_COMPLETIONS)
 
 def filter_words(words):
     words = words[0:MAX_WORDS_PER_VIEW]
