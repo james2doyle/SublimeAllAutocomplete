@@ -54,8 +54,7 @@ class AllAutocomplete(sublime_plugin.EventListener):
 
         words = without_duplicates(words)
         matches = [(pvc1(w), pvc2(w)) for w in words]
-        print(matches)
-        return (matches, sublime.INHIBIT_WORD_COMPLETIONS)
+        return matches
 
 def filter_words(words):
     words = words[0:MAX_WORDS_PER_VIEW]
