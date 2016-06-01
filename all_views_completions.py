@@ -45,7 +45,7 @@ class AllAutocomplete(sublime_plugin.EventListener):
 
         for v in views:
             if v.size() > MAX_VIEW_SIZE:
- +              continue
+                continue
             if len(locations) > 0 and v.id == view.id:
                 view_words = v.extract_completions(prefix, locations[0])
             else:
