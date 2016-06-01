@@ -9,11 +9,12 @@ import time
 
 # limits to prevent bogging down the system
 MIN_WORD_SIZE = 3
-MAX_WORD_SIZE = 50
+MAX_WORD_SIZE = 30
 
 MAX_VIEWS = 20
-MAX_WORDS_PER_VIEW = 100
+MAX_WORDS_PER_VIEW = 50
 MAX_FIX_TIME_SECS_PER_VIEW = 0.01
+MAX_VIEW_SIZE = 20000;
 
 def php_dollar_fix(s):
     if s.startswith('$'):
@@ -26,7 +27,7 @@ class AllAutocomplete(sublime_plugin.EventListener):
     def on_query_completions(self, view, prefix, locations):
         words = []
 
-        
+
         pvc1 = lambda x: x
         pvc2 = lambda x: x
 
@@ -35,7 +36,7 @@ class AllAutocomplete(sublime_plugin.EventListener):
             pvc2 = lambda x: '\\$'+x
             prefix = prefix[1:]
             #prefix = php_dollar_fix(prefix)
-            
+
         # Limit number of views but always include the active view. This
         # view goes first to prioritize matches close to cursor position.
         other_views = [v for v in sublime.active_window().views() if v.id != view.id]
@@ -43,6 +44,8 @@ class AllAutocomplete(sublime_plugin.EventListener):
         views = views[0:MAX_VIEWS]
 
         for v in views:
+            if v.size() > MAX_VIEW_SIZE:
+ +              continue
             if len(locations) > 0 and v.id == view.id:
                 view_words = v.extract_completions(prefix, locations[0])
             else:
@@ -50,10 +53,15 @@ class AllAutocomplete(sublime_plugin.EventListener):
 
             view_words = filter_words(view_words)
             view_words = fix_truncation(v, view_words)
-            words += view_words
+            words += [(w, v) for w in view_words]
 
         words = without_duplicates(words)
-        matches = [(pvc1(w), pvc2(w)) for w in words]
+        matches = []
+        for w, v in words:
+            if v.id != view.id:
+                matches.append((w + ' (%s)' % basename(v.file_name()), w.replace('$', '\\$')))
+            else:
+                matches.append((w, w.replace('$', '\\$')))
         return matches
 
 def filter_words(words):
@@ -64,9 +72,11 @@ def filter_words(words):
 # (n^2 but should not be a problem as len(words) <= MAX_VIEWS*MAX_WORDS_PER_VIEW)
 def without_duplicates(words):
     result = []
-    for w in words:
-        if w not in result:
-            result.append(w)
+    used_words = []
+    for w, v in words:
+        if w not in used_words:
+            used_words.append(w)
+            result.append((w, v))
     return result
 
 
